@@ -33,7 +33,7 @@ try:
 except ImportError:
     pass
 
-from test_backend_integration import RAGGenerator, GenerationConfig, SYSTEM_PROMPT
+from rag_generate import RAGGenerator, GenerationConfig, SYSTEM_PROMPT
 
 
 # Global instances
@@ -54,10 +54,9 @@ async def lifespan(app: FastAPI):
     print("="*60)
     
     config = GenerationConfig(
-        llm_provider="openai",
+        llm_model="gpt-4o",
         retrieval_top_k=8,
-        refine_query=True,
-        use_reranker=True
+        refine_query=True
     )
     
     rag_generator = RAGGenerator(config)
@@ -227,7 +226,8 @@ async def stream_rag_response(
         # Format context and build sources
         context = rag_generator._format_context(results)
         sources_metadata = rag_generator._build_sources_metadata(results)
-        
+
+        yield emit("formatting", {"message": "formatting done", "stage": "formatted"})
         # Build prompt
         user_message = f"""Based on the following research paper excerpts, answer this question:
 
@@ -267,6 +267,7 @@ IMPORTANT: You have been provided with {len(results)} paper excerpts. Make sure 
             json=payload,
             stream=True
         )
+        yield emit("api", {"message": "API call completed", "stage": "api_completed"})
         
         answer_chunks = []
         for line in response.iter_lines():
@@ -286,12 +287,13 @@ IMPORTANT: You have been provided with {len(results)} paper excerpts. Make sure 
                         continue
         
         answer = "".join(answer_chunks)
-        
+
+        #yield emit("sources_metadata", {"message": f"{type(sources_metadata)}", "stage": f"{sources_metadata}"})
         # Stage 4: Complete
         processing_time = time.time() - start_time
         yield emit("complete", {
             "answer": answer,
-            "sources": list(sources_metadata.values()),
+            "sources": list(sources_metadata),
             "refined_query": refined if refined != query else None,
             "processing_time": processing_time
         })

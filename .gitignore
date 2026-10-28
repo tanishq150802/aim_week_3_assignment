@@ -5,6 +5,8 @@ node_modules/
 /node_modules
 /.pnp
 .pnp.js
+.vscode/
+.idea/
 
 # testing
 /coverage
@@ -16,10 +18,12 @@ node_modules/
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
 *.pem
+*.log
 
 # debug
 npm-debug.log*
@@ -27,8 +31,14 @@ yarn-debug.log*
 ts-debug.log*
 
 # local env files
-.env*.local
+/.env*.local
+/.env
+/.env.local
+/.env*.example
+
 .env
+.env.*
+backend/.env.example
 
 # vercel
 .vercel
@@ -55,3 +65,4 @@ backend/*.pyc
 
 
 *.npz
+/*.json
